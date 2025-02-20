@@ -19,6 +19,7 @@ parser.add_argument("-d", "--db", help="DB file, you'll have to download this yo
 parser.add_argument("-ck", "--config-key", help="Config key returned from the BOF. Hint: It is the longer string", required=True, dest="ck")
 parser.add_argument("-dk", "--decryption-key", help="Base64 encoded decryption key from the BOF. Hint: It is the shorter string", required=True, dest="dk")
 parser.add_argument("-a", "--attachment-folder", help="Pointing to folder containing attachments. Hint: Download folder at %APPDATA%\\Signal\\attachments.noindex", required=True, dest="a")
+parser.add_argument("-dest", "--destination-folder", help="Name of output folder", required=True, dest="destination")
 
 args = parser.parse_args()
 
@@ -34,7 +35,7 @@ def get_key():
 
 
 def main():
-    dest = "signal-output-39"
+    dest = args.destination
     key = get_key()
     print(key)
     db_file = args.db
@@ -44,19 +45,12 @@ def main():
         include_empty=True,
     )
 
-    print("Contact list exported")
-
     names = sorted(v.name for v in contacts.values() if v.name is not None)
     secho(" | ".join(names))
 
     dest = Path(dest).expanduser()
     if not dest.is_dir():
         dest.mkdir(parents=True, exist_ok=True)
-    else:
-        secho(
-            f"Output folder '{dest}' already exists, didn't do anything!", fg=colors.RED
-        )
-        raise Exit()
 
     contacts = utils.fix_names(contacts)
 
@@ -85,28 +79,17 @@ def main():
 
         md_path = dest / name / "chat.md"
         js_path = dest / name / "data.json"
-        ht_path = dest / name / "index.html"
 
         md_f = md_path.open("a", encoding="utf-8")
         js_f = js_path.open("a", encoding="utf-8")
-        ht_f = None
-        ht_f = ht_path.open("w", encoding="utf-8")
         try:
             for msg in messages:
                 print(msg.to_md(), file=chat_log_file_f)
                 print(msg.to_md(), file=md_f)
                 print(msg.dict_str(), file=js_f)
-
-                ht = html.create_html(
-                    name=name, messages=messages, msgs_per_page=100
-                )
-                print(ht, file=ht_f)
         finally:
             md_f.close()
             js_f.close()
-            if ht_f:
-                ht_f.close()
-
     secho("Done!", fg=colors.GREEN)
 
 main()
